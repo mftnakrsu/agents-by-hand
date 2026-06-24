@@ -34,11 +34,11 @@ part's agent breaks, and resolves it with exactly one new mechanism.
 | 4 | Surviving a Broken Plan: the critic and error-triggered replanning | [replanning_critic.py](part-04-replanning-and-critic/replanning_critic.py) | [notebook](part-04-replanning-and-critic/replanning_critic.ipynb) | [read](https://www.mefby.com/essays/replanning-and-critic) |
 | 5 | Learning from Failure: in-loop reflection and Reflexion | [reflexion.py](part-05-reflection-and-reflexion/reflexion.py) | [notebook](part-05-reflection-and-reflexion/reflexion.ipynb) | [read](https://www.mefby.com/essays/reflection-and-reflexion) |
 | 6 | The Four Memories: typed stores the agent edits itself | [four_memories.py](part-06-four-memories-self-editing/four_memories.py) | [notebook](part-06-four-memories-self-editing/four_memories.ipynb) | [read](https://www.mefby.com/essays/four-memories-self-editing) |
+| 7 | Surviving the Long Haul: compaction and forgetting | [compaction_and_forgetting.py](part-07-compaction-and-forgetting/compaction_and_forgetting.py) | [notebook](part-07-compaction-and-forgetting/compaction_and_forgetting.ipynb) | [read](https://www.mefby.com/essays/compaction-and-forgetting) |
 
 ### Roadmap (building in order)
 
 **Core track — grow one agent from a bare loop to production**
-7. Surviving the Long Haul: compaction and forgetting
 8. Stopping the Runaway: budgets, loop detection, and the circuit breaker
 9. The Durable Agent: event journal, replay, and effectively-once
 10. Pause, Approve, Resume, Steer: human-in-the-loop
