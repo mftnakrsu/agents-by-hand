@@ -40,13 +40,13 @@ part's agent breaks, and resolves it with exactly one new mechanism.
 | 10 | Pause, Approve, Resume, Steer: human-in-the-loop | [pause_approve_resume.py](part-10-pause-approve-resume/pause_approve_resume.py) | [notebook](part-10-pause-approve-resume/pause_approve_resume.ipynb) | [read](https://www.mefby.com/essays/pause-approve-resume) |
 | 11 | Shipping It: tracing, cost-per-success, and the core capstone | [observable_agent.py](part-11-observable-agent/observable_agent.py) | [notebook](part-11-observable-agent/observable_agent.ipynb) | [read](https://www.mefby.com/essays/observable-agent) |
 | 12 | Tools as a Protocol: a minimal MCP server and host by hand | [mcp_server_and_host.py](part-12-mcp-by-hand/mcp_server_and_host.py) | [notebook](part-12-mcp-by-hand/mcp_server_and_host.ipynb) | [read](https://www.mefby.com/essays/mcp-by-hand) |
+| 13 | The Code-Running Tool: sandboxed execution and computer-use | [sandboxed_code_tool.py](part-13-code-execution-and-sandbox/sandboxed_code_tool.py) | [notebook](part-13-code-execution-and-sandbox/sandboxed_code_tool.ipynb) | [read](https://www.mefby.com/essays/code-execution-and-sandbox) |
 
 ### Roadmap (building in order)
 
 **Core track — grow one agent from a bare loop to production**
 
 **Frontier track — open the agent to the protocol wire and multi-agent**
-13. The Code-Running Tool: sandboxed execution and computer-use
 14. The Supervisor and the Handoff: multi-agent, and when it hurts
 15. Agent to Agent: A2A delegation across boundaries
 16. Securing the Agent: the lethal trifecta and untrusted tools
