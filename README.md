@@ -31,11 +31,11 @@ part's agent breaks, and resolves it with exactly one new mechanism.
 | 1 | The Augmented LLM: a real loop with typed tools | [augmented_llm_loop.py](part-01-augmented-llm-loop/augmented_llm_loop.py) | [notebook](part-01-augmented-llm-loop/augmented_llm_loop.ipynb) | [read](https://www.mefby.com/essays/augmented-llm-loop) |
 | 2 | When Tools Fail: retries, timeouts, and a failure taxonomy | [robust_execution.py](part-02-robust-tool-execution/robust_execution.py) | [notebook](part-02-robust-tool-execution/robust_execution.ipynb) | [read](https://www.mefby.com/essays/robust-tool-execution) |
 | 3 | Planning the Work: plan-and-execute, ReWOO, and the tool DAG | [planners.py](part-03-planning-and-the-tool-dag/planners.py) | [notebook](part-03-planning-and-the-tool-dag/planners.ipynb) | [read](https://www.mefby.com/essays/planning-and-the-tool-dag) |
+| 4 | Surviving a Broken Plan: the critic and error-triggered replanning | [replanning_critic.py](part-04-replanning-and-critic/replanning_critic.py) | [notebook](part-04-replanning-and-critic/replanning_critic.ipynb) | [read](https://www.mefby.com/essays/replanning-and-critic) |
 
 ### Roadmap (building in order)
 
 **Core track — grow one agent from a bare loop to production**
-4. Surviving a Broken Plan: the critic and error-triggered replanning
 5. Learning from Failure: in-loop reflection and Reflexion
 6. The Four Memories: typed stores the agent edits itself
 7. Surviving the Long Haul: compaction and forgetting
