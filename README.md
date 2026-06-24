@@ -41,13 +41,13 @@ part's agent breaks, and resolves it with exactly one new mechanism.
 | 11 | Shipping It: tracing, cost-per-success, and the core capstone | [observable_agent.py](part-11-observable-agent/observable_agent.py) | [notebook](part-11-observable-agent/observable_agent.ipynb) | [read](https://www.mefby.com/essays/observable-agent) |
 | 12 | Tools as a Protocol: a minimal MCP server and host by hand | [mcp_server_and_host.py](part-12-mcp-by-hand/mcp_server_and_host.py) | [notebook](part-12-mcp-by-hand/mcp_server_and_host.ipynb) | [read](https://www.mefby.com/essays/mcp-by-hand) |
 | 13 | The Code-Running Tool: sandboxed execution and computer-use | [sandboxed_code_tool.py](part-13-code-execution-and-sandbox/sandboxed_code_tool.py) | [notebook](part-13-code-execution-and-sandbox/sandboxed_code_tool.ipynb) | [read](https://www.mefby.com/essays/code-execution-and-sandbox) |
+| 14 | The Supervisor and the Handoff: multi-agent, and when it hurts | [supervisor_and_handoffs.py](part-14-supervisor-and-handoffs/supervisor_and_handoffs.py) | [notebook](part-14-supervisor-and-handoffs/supervisor_and_handoffs.ipynb) | [read](https://www.mefby.com/essays/supervisor-and-handoffs) |
 
 ### Roadmap (building in order)
 
 **Core track — grow one agent from a bare loop to production**
 
 **Frontier track — open the agent to the protocol wire and multi-agent**
-14. The Supervisor and the Handoff: multi-agent, and when it hurts
 15. Agent to Agent: A2A delegation across boundaries
 16. Securing the Agent: the lethal trifecta and untrusted tools
 17. Grading the Agent: three-layer eval and the regression gate
