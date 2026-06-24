@@ -38,11 +38,11 @@ part's agent breaks, and resolves it with exactly one new mechanism.
 | 8 | Stopping the Runaway: budgets, loop detection, and the circuit breaker | [budget_circuit_breaker.py](part-08-budgets-and-circuit-breaker/budget_circuit_breaker.py) | [notebook](part-08-budgets-and-circuit-breaker/budget_circuit_breaker.ipynb) | [read](https://www.mefby.com/essays/budgets-and-circuit-breaker) |
 | 9 | The Durable Agent: event journal, replay, and effectively-once | [durable_agent.py](part-09-durable-agent/durable_agent.py) | [notebook](part-09-durable-agent/durable_agent.ipynb) | [read](https://www.mefby.com/essays/durable-agent) |
 | 10 | Pause, Approve, Resume, Steer: human-in-the-loop | [pause_approve_resume.py](part-10-pause-approve-resume/pause_approve_resume.py) | [notebook](part-10-pause-approve-resume/pause_approve_resume.ipynb) | [read](https://www.mefby.com/essays/pause-approve-resume) |
+| 11 | Shipping It: tracing, cost-per-success, and the core capstone | [observable_agent.py](part-11-observable-agent/observable_agent.py) | [notebook](part-11-observable-agent/observable_agent.ipynb) | [read](https://www.mefby.com/essays/observable-agent) |
 
 ### Roadmap (building in order)
 
 **Core track — grow one agent from a bare loop to production**
-11. Shipping It: tracing, cost-per-success, and the core capstone
 
 **Frontier track — open the agent to the protocol wire and multi-agent**
 12. Tools as a Protocol: a minimal MCP server and host by hand
