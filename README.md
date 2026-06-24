@@ -46,11 +46,10 @@ part's agent breaks, and resolves it with exactly one new mechanism.
 | 16 | Securing the Agent: the lethal trifecta and untrusted tools | [secure_agent.py](part-16-securing-the-agent/secure_agent.py) | [notebook](part-16-securing-the-agent/secure_agent.ipynb) | [read](https://www.mefby.com/essays/securing-the-agent) |
 | 17 | Grading the Agent: three-layer eval and the regression gate | [agent_eval.py](part-17-agent-evaluation/agent_eval.py) | [notebook](part-17-agent-evaluation/agent_eval.ipynb) | [read](https://www.mefby.com/essays/agent-evaluation) |
 
-### Roadmap (building in order)
-
-**Core track — grow one agent from a bare loop to production**
-
-**Frontier track — open the agent to the protocol wire and multi-agent**
+All 17 parts are shipped: the **core track** (Parts 1-11) grows one agent from a
+bare loop to a durable, observable, production-shaped system, and the **frontier
+track** (Parts 12-17) opens it to the MCP/A2A wire, sandboxed code, multi-agent
+orchestration, security, and a trajectory regression gate.
 
 ## Quick start
 
