@@ -35,11 +35,11 @@ part's agent breaks, and resolves it with exactly one new mechanism.
 | 5 | Learning from Failure: in-loop reflection and Reflexion | [reflexion.py](part-05-reflection-and-reflexion/reflexion.py) | [notebook](part-05-reflection-and-reflexion/reflexion.ipynb) | [read](https://www.mefby.com/essays/reflection-and-reflexion) |
 | 6 | The Four Memories: typed stores the agent edits itself | [four_memories.py](part-06-four-memories-self-editing/four_memories.py) | [notebook](part-06-four-memories-self-editing/four_memories.ipynb) | [read](https://www.mefby.com/essays/four-memories-self-editing) |
 | 7 | Surviving the Long Haul: compaction and forgetting | [compaction_and_forgetting.py](part-07-compaction-and-forgetting/compaction_and_forgetting.py) | [notebook](part-07-compaction-and-forgetting/compaction_and_forgetting.ipynb) | [read](https://www.mefby.com/essays/compaction-and-forgetting) |
+| 8 | Stopping the Runaway: budgets, loop detection, and the circuit breaker | [budget_circuit_breaker.py](part-08-budgets-and-circuit-breaker/budget_circuit_breaker.py) | [notebook](part-08-budgets-and-circuit-breaker/budget_circuit_breaker.ipynb) | [read](https://www.mefby.com/essays/budgets-and-circuit-breaker) |
 
 ### Roadmap (building in order)
 
 **Core track — grow one agent from a bare loop to production**
-8. Stopping the Runaway: budgets, loop detection, and the circuit breaker
 9. The Durable Agent: event journal, replay, and effectively-once
 10. Pause, Approve, Resume, Steer: human-in-the-loop
 11. Shipping It: tracing, cost-per-success, and the core capstone
