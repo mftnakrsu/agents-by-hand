@@ -1,0 +1,17 @@
+# agents-by-hand — dependencies, grouped by need.
+# Loose, protective bounds only: enough to dodge a breaking major release,
+# not exact pins. Pin exact versions for anything you actually ship.
+#
+# EVERY part runs offline with NO API key and NO third-party package: the
+# deterministic fallback (a rule-based controller + a lexical retriever) is the
+# reproducible default. The packages below only light up the OPTIONAL "real"
+# paths, exactly as in the companion rag-by-hand repo.
+
+# The "real LLM controller" path — pick ONE provider (all optional):
+openai>=1.0,<2     # hosted; the default generate() across the series
+anthropic          # hosted; the Claude variant of generate()
+requests>=2.28     # only for the local Ollama generation path
+
+# The optional "real dense retriever" path (RAG-as-a-tool parts reuse this):
+sentence-transformers>=2.2,<4   # parts fall back to a pure-Python stand-in if absent
+numpy>=1.24                     # only used on the real-embed path
