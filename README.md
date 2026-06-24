@@ -29,11 +29,11 @@ part's agent breaks, and resolves it with exactly one new mechanism.
 | Part | Topic | Code | Notebook | Essay |
 |---|---|---|---|---|
 | 1 | The Augmented LLM: a real loop with typed tools | [augmented_llm_loop.py](part-01-augmented-llm-loop/augmented_llm_loop.py) | [notebook](part-01-augmented-llm-loop/augmented_llm_loop.ipynb) | [read](https://www.mefby.com/essays/augmented-llm-loop) |
+| 2 | When Tools Fail: retries, timeouts, and a failure taxonomy | [robust_execution.py](part-02-robust-tool-execution/robust_execution.py) | [notebook](part-02-robust-tool-execution/robust_execution.ipynb) | [read](https://www.mefby.com/essays/robust-tool-execution) |
 
 ### Roadmap (building in order)
 
 **Core track — grow one agent from a bare loop to production**
-2. When Tools Fail: retries, timeouts, and a failure taxonomy
 3. Planning the Work: plan-and-execute, ReWOO, and the tool DAG
 4. Surviving a Broken Plan: the critic and error-triggered replanning
 5. Learning from Failure: in-loop reflection and Reflexion
