@@ -44,13 +44,13 @@ part's agent breaks, and resolves it with exactly one new mechanism.
 | 14 | The Supervisor and the Handoff: multi-agent, and when it hurts | [supervisor_and_handoffs.py](part-14-supervisor-and-handoffs/supervisor_and_handoffs.py) | [notebook](part-14-supervisor-and-handoffs/supervisor_and_handoffs.ipynb) | [read](https://www.mefby.com/essays/supervisor-and-handoffs) |
 | 15 | Agent to Agent: A2A delegation across boundaries | [a2a_delegation.py](part-15-a2a-agent-interop/a2a_delegation.py) | [notebook](part-15-a2a-agent-interop/a2a_delegation.ipynb) | [read](https://www.mefby.com/essays/a2a-agent-interop) |
 | 16 | Securing the Agent: the lethal trifecta and untrusted tools | [secure_agent.py](part-16-securing-the-agent/secure_agent.py) | [notebook](part-16-securing-the-agent/secure_agent.ipynb) | [read](https://www.mefby.com/essays/securing-the-agent) |
+| 17 | Grading the Agent: three-layer eval and the regression gate | [agent_eval.py](part-17-agent-evaluation/agent_eval.py) | [notebook](part-17-agent-evaluation/agent_eval.ipynb) | [read](https://www.mefby.com/essays/agent-evaluation) |
 
 ### Roadmap (building in order)
 
 **Core track — grow one agent from a bare loop to production**
 
 **Frontier track — open the agent to the protocol wire and multi-agent**
-17. Grading the Agent: three-layer eval and the regression gate
 
 ## Quick start
 
