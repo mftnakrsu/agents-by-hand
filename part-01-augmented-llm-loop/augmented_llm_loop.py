@@ -424,7 +424,7 @@ def generate(prompt):
     from openai import OpenAI
     client = OpenAI()                               # reads OPENAI_API_KEY
     resp = client.chat.completions.create(
-        model="gpt-4o-mini",                        # a small chat model; check names
+        model="gpt-6-luna",                         # successor to gpt-4o-mini; check names
         messages=[{"role": "user", "content": prompt}],
         temperature=0,
     )

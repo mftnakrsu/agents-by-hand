@@ -246,7 +246,7 @@ def generate(prompt):
     """REAL path: ask a hosted LLM; the usage it returns fills the llm span. Unused offline."""
     from openai import OpenAI
     client = OpenAI()
-    resp = client.chat.completions.create(model="gpt-4o-mini",
+    resp = client.chat.completions.create(model="gpt-6-luna",
                                           messages=[{"role": "user", "content": prompt}], temperature=0)
     return resp.choices[0].message.content
 

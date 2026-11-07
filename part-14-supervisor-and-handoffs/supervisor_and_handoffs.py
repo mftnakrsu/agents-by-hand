@@ -232,7 +232,7 @@ def generate(prompt):
     """REAL path: a hosted LLM is the lead/worker/critic. Unused offline."""
     from openai import OpenAI
     client = OpenAI()
-    resp = client.chat.completions.create(model="gpt-4o-mini",
+    resp = client.chat.completions.create(model="gpt-6-luna",
                                           messages=[{"role": "user", "content": prompt}], temperature=0)
     return resp.choices[0].message.content
 

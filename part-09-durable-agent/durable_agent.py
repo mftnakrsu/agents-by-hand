@@ -238,7 +238,7 @@ def generate(prompt):
     from openai import OpenAI
     client = OpenAI()
     resp = client.chat.completions.create(
-        model="gpt-4o-mini",
+        model="gpt-6-luna",
         messages=[{"role": "user", "content": prompt}],
         temperature=0,
     )
