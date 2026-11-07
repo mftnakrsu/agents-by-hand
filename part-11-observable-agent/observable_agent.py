@@ -17,9 +17,10 @@ VIEW of the same log. This part folds the journal into spans.
    span invoke_agent, with child spans for each llm decision (operation chat) and
    each execute_tool call. Each span carries gen_ai.*-STYLE attributes:
    operation.name, request.model, tool.name, usage input/output tokens, and latency.
-   We emit them as JSONL. (Attribute names are hedged as *-STYLE on purpose: the
-   GenAI semantic conventions are still moving. A real OTLP exporter is a commented
-   one-liner, the same swap-in pattern as generate().)
+   Cost is not a GenAI convention at all, so the root span carries it under our own
+   prefix, app.cost_usd. We emit them as JSONL. (Attribute names are hedged as
+   *-STYLE on purpose: the GenAI semantic conventions are still moving. A real OTLP
+   exporter is a commented one-liner, the same swap-in pattern as generate().)
 
 2. METRICS RECONSTRUCTED FROM THE SPANS: the trajectory (the tool sequence), total
    tokens and cost, per-step latency, and the one number that matters in production,
@@ -80,7 +81,7 @@ ONE LOG, TWO VIEWS. The Part 9 journal (durability)...
   └─ llm           [540-690ms]  decide finish  in=95 out=20
 
   The same spans as JSONL (what a real OTLP exporter would ship):
-    {"attributes": {"gen_ai.cost_usd": 0.00252, "gen_ai.operation.name": "invoke_agent", "gen_ai.usage.input_tokens": 205, "gen_ai.usage.output_tokens": 47}, "end_ms": 690, "name": "invoke_agent", "parent_id": null, "span_id": "s0", "start_ms": 0}
+    {"attributes": {"app.cost_usd": 0.00252, "gen_ai.operation.name": "invoke_agent", "gen_ai.usage.input_tokens": 205, "gen_ai.usage.output_tokens": 47}, "end_ms": 690, "name": "invoke_agent", "parent_id": null, "span_id": "s0", "start_ms": 0}
     {"attributes": {"decided.tool": "search_policy", "gen_ai.operation.name": "chat", "gen_ai.request.model": "deterministic-rule-controller", "gen_ai.usage.input_tokens": 40, "gen_ai.usage.output_tokens": 12}, "end_ms": 180, "name": "llm", "parent_id": "s0", "span_id": "s1", "start_ms": 0}
     {"attributes": {"gen_ai.operation.name": "execute_tool", "gen_ai.tool.name": "search_policy"}, "end_ms": 240, "name": "execute_tool", "parent_id": "s0", "span_id": "s2", "start_ms": 180}
     {"attributes": {"decided.tool": "process_refund", "gen_ai.operation.name": "chat", "gen_ai.request.model": "deterministic-rule-controller", "gen_ai.usage.input_tokens": 70, "gen_ai.usage.output_tokens": 15}, "end_ms": 450, "name": "llm", "parent_id": "s0", "span_id": "s3", "start_ms": 240}
@@ -200,7 +201,8 @@ def build_spans(journal):
             "attributes": {"gen_ai.operation.name": "invoke_agent",
                            "gen_ai.usage.input_tokens": in_tok,
                            "gen_ai.usage.output_tokens": out_tok,
-                           "gen_ai.cost_usd": round((in_tok + out_tok) * PRICE_PER_TOKEN, 5)}}
+                           # cost has no GenAI convention: our own app.* prefix
+                           "app.cost_usd": round((in_tok + out_tok) * PRICE_PER_TOKEN, 5)}}
     return [root] + children
 
 
@@ -209,7 +211,7 @@ def print_span_tree(spans):
     a = root["attributes"]
     print(f"  invoke_agent  [{root['start_ms']}-{root['end_ms']}ms]  "
           f"in={a['gen_ai.usage.input_tokens']} out={a['gen_ai.usage.output_tokens']} "
-          f"${a['gen_ai.cost_usd']:.5f}")
+          f"${a['app.cost_usd']:.5f}")
     kids = spans[1:]
     for i, s in enumerate(kids):
         branch = "  " + ("└─" if i == len(kids) - 1 else "├─")
@@ -232,7 +234,7 @@ def metrics_from_spans(spans):
     return {"trajectory": tools, "llm_calls": llm_calls,
             "input_tokens": root["attributes"]["gen_ai.usage.input_tokens"],
             "output_tokens": root["attributes"]["gen_ai.usage.output_tokens"],
-            "cost_usd": root["attributes"]["gen_ai.cost_usd"],
+            "cost_usd": root["attributes"]["app.cost_usd"],
             "latency_ms": root["end_ms"]}
 
 

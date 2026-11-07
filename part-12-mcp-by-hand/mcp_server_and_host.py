@@ -15,13 +15,17 @@ servers it connects to, not hardcoded at author time.
 
 This part builds both sides by hand, stdlib only:
 
-1. AN MCP SERVER. It answers JSON-RPC requests: the initialize handshake
-   (protocolVersion + capability negotiation), tools/list (return tool schemas),
+1. AN MCP SERVER. It answers JSON-RPC requests: server/discover (which protocol
+   versions and capabilities it supports), tools/list (return tool schemas),
    tools/call (run a tool), and the other two of MCP's three server PRIMITIVES,
    resources (read-only data the host can fetch) and prompts (named prompt
-   templates). We wrap the support-bot tools as MCP capabilities.
+   templates). We wrap the support-bot tools as MCP capabilities. There is NO
+   handshake: since the 2026-07-28 revision MCP is stateless, and every request
+   carries io.modelcontextprotocol/protocolVersion and .../clientCapabilities in its
+   _meta. A request in a version the server does not speak is refused with -32022
+   (Unsupported protocol version), listing the versions it does support.
 
-2. AN MCP HOST. It performs the handshake, calls tools/list, and feeds the
+2. AN MCP HOST. It optionally calls server/discover, calls tools/list, and feeds the
    returned JSON inputSchema STRAIGHT INTO the Part 1 validator and controller,
    replacing the hardcoded dict. The same schema object Part 1 hand-wrote now
    arrives over the wire. And the host MULTIPLEXES: connect to two servers and the
@@ -46,8 +50,11 @@ Deterministic; the in-process shim is fully reproducible.
 Run:
   python3 mcp_server_and_host.py        # offline; no API key, no network, no deps
 
-NOTE: the MCP protocolVersion and SDK shapes move fast; check the current spec. Only
-the transport and protocolVersion strings would need edits.
+NOTE: written against the MCP 2026-07-28 revision. The first version of this part
+used 2025-06-18, where every connection opened with an initialize request and an
+initialized notification; 2026-07-28 removed that handshake (and protocol-level
+sessions). The spec moves fast; check the current one. Only the transport and the
+protocolVersion strings would need edits.
 
 Expected output (deterministic default path):
 ========================================================================
@@ -57,33 +64,40 @@ TOOLS AS A PROTOCOL  -  a minimal MCP server and host by hand
 directly, but every frame below is a real JSON-RPC message printed verbatim.
 
 ------------------------------------------------------------------------
-1) INITIALIZE handshake + tools/list discovery (the JSON-RPC wire frames).
+1) DISCOVERY WITHOUT A HANDSHAKE: server/discover (optional) + tools/list.
 ------------------------------------------------------------------------
-    --> {"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {"protocolVersion": "2025-06-18", "clientInfo": {"name": "agents-by-hand-host"}}}
-    <-- {"jsonrpc": "2.0", "id": 1, "result": {"protocolVersion": "2025-06-18", "serverInfo": {"name": "support-server"}, "capabilities": {"tools": {}, "resources": {}, "prompts": {}}}}
-    [host] connected to support-server (protocol 2025-06-18, capabilities: tools, resources, prompts)
-    --> {"jsonrpc": "2.0", "id": 2, "method": "tools/list", "params": {}}
-    <-- {"jsonrpc": "2.0", "id": 2, "result": {"tools": [{"name": "search_policy", "description": "search the support/policy index", "inputSchema": {"type": "object", "properties": {"query": {"type": "string"}}, "required": ["query"]}}, {"name": "process_refund", "description": "issue a refund for an order (side-effecting)", "inputSchema": {"type": "object", "properties": {"order_id": {"type": "string"}, "amount": {"type": "number"}}, "required": ["order_id", "amount"]}}]}}
-    [host] discovered tools: ['search_policy', 'process_refund']
+    --> {"jsonrpc": "2.0", "id": 1, "method": "server/discover", "params": {"_meta": {"io.modelcontextprotocol/protocolVersion": "2026-07-28", "io.modelcontextprotocol/clientInfo": {"name": "agents-by-hand-host", "version": "0.1.0"}, "io.modelcontextprotocol/clientCapabilities": {}}}}
+    <-- {"jsonrpc": "2.0", "id": 1, "result": {"resultType": "complete", "supportedVersions": ["2026-07-28"], "capabilities": {"tools": {}, "resources": {}, "prompts": {}}, "_meta": {"io.modelcontextprotocol/serverInfo": {"name": "support-server", "version": "0.1.0"}}, "ttlMs": 3600000, "cacheScope": "public"}}
+    [host] support-server speaks ['2026-07-28'], capabilities: tools, resources, prompts
+    --> {"jsonrpc": "2.0", "id": 2, "method": "tools/list", "params": {"_meta": {...}}}
+    <-- {"jsonrpc": "2.0", "id": 2, "result": {"resultType": "complete", "tools": [{"name": "search_policy", "description": "search the support/policy index", "inputSchema": {"type": "object", "properties": {"query": {"type": "string"}}, "required": ["query"]}}, {"name": "process_refund", "description": "issue a refund for an order (side-effecting)", "inputSchema": {"type": "object", "properties": {"order_id": {"type": "string"}, "amount": {"type": "number"}}, "required": ["order_id", "amount"]}}], "ttlMs": 300000, "cacheScope": "public"}}
+    [host] discovered tools: ['search_policy', 'process_refund']  (cache 300000 ms, public)
 
 ------------------------------------------------------------------------
 2) THE THREE PRIMITIVES: tools, resources, prompts.
 ------------------------------------------------------------------------
   tools/call:
-    --> {"jsonrpc": "2.0", "id": 3, "method": "tools/call", "params": {"name": "search_policy", "arguments": {"query": "refund window"}}}
-    <-- {"jsonrpc": "2.0", "id": 3, "result": {"content": [{"type": "text", "text": "Refunds are accepted within 30 days; after the window a 10% restocking fee applies."}], "isError": false}}
+    --> {"jsonrpc": "2.0", "id": 3, "method": "tools/call", "params": {"name": "search_policy", "arguments": {"query": "refund window"}, "_meta": {...}}}
+    <-- {"jsonrpc": "2.0", "id": 3, "result": {"resultType": "complete", "content": [{"type": "text", "text": "Refunds are accepted within 30 days; after the window a 10% restocking fee applies."}], "isError": false}}
     [host] result: Refunds are accepted within 30 days; after the window a 10% restocking fee applies.
   resources/read:
-    --> {"jsonrpc": "2.0", "id": 4, "method": "resources/read", "params": {"uri": "file:///policies/refund.md"}}
-    <-- {"jsonrpc": "2.0", "id": 4, "result": {"contents": [{"uri": "file:///policies/refund.md", "text": "Refunds within 30 days; 10% restocking fee after."}]}}
+    --> {"jsonrpc": "2.0", "id": 4, "method": "resources/read", "params": {"uri": "file:///policies/refund.md", "_meta": {...}}}
+    <-- {"jsonrpc": "2.0", "id": 4, "result": {"resultType": "complete", "contents": [{"uri": "file:///policies/refund.md", "text": "Refunds within 30 days; 10% restocking fee after."}], "ttlMs": 300000, "cacheScope": "public"}}
     [host] resource text: 'Refunds within 30 days; 10% restocking fee after.'
   prompts/get:
-    --> {"jsonrpc": "2.0", "id": 5, "method": "prompts/get", "params": {"name": "refund_decision"}}
-    <-- {"jsonrpc": "2.0", "id": 5, "result": {"messages": [{"role": "user", "content": {"type": "text", "text": "Decide the refund for {order}, citing the policy."}}]}}
+    --> {"jsonrpc": "2.0", "id": 5, "method": "prompts/get", "params": {"name": "refund_decision", "_meta": {...}}}
+    <-- {"jsonrpc": "2.0", "id": 5, "result": {"resultType": "complete", "messages": [{"role": "user", "content": {"type": "text", "text": "Decide the refund for {order}, citing the policy."}}]}}
     [host] prompt template: 'Decide the refund for {order}, citing the policy.'
 
 ------------------------------------------------------------------------
-3) THE DISCOVERED SCHEMA DRIVES THE CONTROLLER (Part 1's validator, over the wire).
+3) VERSION MISMATCH: a host still pinned to the old revision is refused.
+------------------------------------------------------------------------
+    --> {"jsonrpc": "2.0", "id": 6, "method": "tools/list", "params": {"_meta": {"io.modelcontextprotocol/protocolVersion": "2025-06-18", ...}}}
+    <-- {"jsonrpc": "2.0", "id": 6, "error": {"code": -32022, "message": "Unsupported protocol version", "data": {"supported": ["2026-07-28"], "requested": "2025-06-18"}}}
+    [host] error -32022: retry with one of ['2026-07-28']
+
+------------------------------------------------------------------------
+4) THE DISCOVERED SCHEMA DRIVES THE CONTROLLER (Part 1's validator, over the wire).
 ------------------------------------------------------------------------
     validate {"order_id": "ORD-3300", "amount": 180.0} -> OK
     validate {"order_id": "ORD-3300"} -> REJECTED: missing required arg 'amount'
@@ -91,10 +105,10 @@ directly, but every frame below is a real JSON-RPC message printed verbatim.
     The schema was not hardcoded; it arrived from tools/list. Part 1's guarantee, over MCP.
 
 ------------------------------------------------------------------------
-4) MULTIPLEXING: connect a second server; the palette is the union of both.
+5) MULTIPLEXING: connect a second server; the palette is the union of both.
 ------------------------------------------------------------------------
-    [host] connected to support-server (protocol 2025-06-18, capabilities: tools, resources, prompts)
-    [host] connected to catalog-server (protocol 2025-06-18, capabilities: tools)
+    [host] discovered support-server (protocol 2026-07-28, capabilities: tools, resources, prompts)
+    [host] discovered catalog-server (protocol 2026-07-28, capabilities: tools)
     [host] palette across 2 servers:
       search_policy    from support-server
       process_refund   from support-server
@@ -110,16 +124,17 @@ stdio. Two local processes, no network. Shown for reference; the verified run ab
 uses the in-process shim.
 ========================================================================
     $ python mcp_server.py            # process A: reads JSON-RPC from stdin
-    host -> server (stdin):  {"jsonrpc":"2.0","id":1,"method":"initialize",...}
-    server -> host (stdout): {"jsonrpc":"2.0","id":1,"result":{"protocolVersion":...}}
-    host -> server (stdin):  {"jsonrpc":"2.0","id":2,"method":"tools/list"}
-    server -> host (stdout): {"jsonrpc":"2.0","id":2,"result":{"tools":[...]}}
+    host -> server (stdin):  {"jsonrpc":"2.0","id":1,"method":"server/discover","params":{"_meta":{...}}}
+    server -> host (stdout): {"jsonrpc":"2.0","id":1,"result":{"resultType":"complete","supportedVersions":["2026-07-28"],...}}
+    host -> server (stdin):  {"jsonrpc":"2.0","id":2,"method":"tools/list","params":{"_meta":{...}}}
+    server -> host (stdout): {"jsonrpc":"2.0","id":2,"result":{"resultType":"complete","tools":[...],...}}
     (same frames as above, now crossing a pipe between two OS processes)
 
 ========================================================================
 Done. Tools are no longer a hardcoded dict:
   - a SERVER advertises tools/resources/prompts; a HOST discovers them over JSON-RPC
-  - the initialize handshake negotiates the protocol version + capabilities
+  - no handshake: every request carries its protocol version + capabilities in _meta
+  - server/discover (optional) advertises versions + capabilities; a mismatch is -32022
   - discovered inputSchemas feed Part 1's validator/controller, unchanged
   - one host MULTIPLEXES many servers into a single, run-time-assembled palette
 ========================================================================
@@ -149,10 +164,24 @@ def _process_refund(order_id, amount):
 
 # ===========================================================================
 # Step 2. The MCP server. A plain object whose handle() dispatches JSON-RPC by
-# method. initialize negotiates the protocol version and advertises capabilities;
-# tools/list, tools/call, resources/*, prompts/* implement the three primitives.
+# method. There is NO handshake (MCP 2026-07-28 is stateless): every request carries
+# its protocol version and the client's capabilities in params._meta, and the server
+# checks them on every call, remembering nothing between requests. server/discover
+# advertises versions + capabilities; tools/list, tools/call, resources/*, prompts/*
+# implement the three primitives. Every result carries resultType "complete", and
+# cacheable results carry ttlMs + cacheScope hints.
 # ===========================================================================
-PROTOCOL_VERSION = "2025-06-18"            # MCP uses date-style versions; check current
+PROTOCOL_VERSION = "2026-07-28"            # MCP uses date-style versions; check current
+SUPPORTED_VERSIONS = [PROTOCOL_VERSION]
+MCP = "io.modelcontextprotocol/"           # reserved _meta key prefix
+LIST_CACHE = {"ttlMs": 300000, "cacheScope": "public"}      # tools/list, resources/read, ...
+DISCOVER_CACHE = {"ttlMs": 3600000, "cacheScope": "public"}  # server/discover: an hour
+
+
+class MCPError(Exception):
+    def __init__(self, code, message, data=None):
+        super().__init__(message)
+        self.code, self.message, self.data = code, message, data
 
 
 class MCPServer:
@@ -165,8 +194,14 @@ class MCPServer:
     def handle(self, request):
         rid, method, params = request.get("id"), request["method"], request.get("params", {})
         try:
+            self._check_meta(params.get("_meta", {}))
             result = self._dispatch(method, params)
-            return {"jsonrpc": "2.0", "id": rid, "result": result}
+            return {"jsonrpc": "2.0", "id": rid, "result": {"resultType": "complete", **result}}
+        except MCPError as exc:
+            error = {"code": exc.code, "message": exc.message}
+            if exc.data is not None:
+                error["data"] = exc.data
+            return {"jsonrpc": "2.0", "id": rid, "error": error}
         except KeyError as exc:
             return {"jsonrpc": "2.0", "id": rid,
                     "error": {"code": -32602, "message": f"invalid params: {exc}"}}
@@ -174,34 +209,48 @@ class MCPServer:
             return {"jsonrpc": "2.0", "id": rid,
                     "error": {"code": -32603, "message": str(exc)}}
 
+    def _check_meta(self, meta):
+        # Stateless: the version and client capabilities arrive with EVERY request.
+        if MCP + "protocolVersion" not in meta or MCP + "clientCapabilities" not in meta:
+            raise MCPError(-32602, "missing required _meta fields")
+        requested = meta[MCP + "protocolVersion"]
+        if requested not in SUPPORTED_VERSIONS:
+            # version negotiation: refuse, and say what we do speak
+            raise MCPError(-32022, "Unsupported protocol version",
+                           {"supported": SUPPORTED_VERSIONS, "requested": requested})
+
+    def _capabilities(self):
+        caps = {"tools": self.tools, "resources": self.resources, "prompts": self.prompts}
+        return {c: {} for c, offered in caps.items() if offered}
+
     def _dispatch(self, method, params):
-        if method == "initialize":
-            return {"protocolVersion": PROTOCOL_VERSION,
-                    "serverInfo": {"name": self.name},
-                    "capabilities": {
-                        "tools": {} if self.tools else None,
-                        "resources": {} if self.resources else None,
-                        "prompts": {} if self.prompts else None}}
+        if method == "server/discover":
+            return {"supportedVersions": SUPPORTED_VERSIONS,
+                    "capabilities": self._capabilities(),
+                    "_meta": {MCP + "serverInfo": {"name": self.name, "version": "0.1.0"}},
+                    **DISCOVER_CACHE}
         if method == "tools/list":
             return {"tools": [{"name": n, "description": t["description"],
-                               "inputSchema": t["inputSchema"]} for n, t in self.tools.items()]}
+                               "inputSchema": t["inputSchema"]} for n, t in self.tools.items()],
+                    **LIST_CACHE}
         if method == "tools/call":
             name, args = params["name"], params.get("arguments", {})
             text = self.tools[name]["fn"](**args)
             return {"content": [{"type": "text", "text": text}], "isError": False}
         if method == "resources/list":
-            return {"resources": [{"uri": u, "name": r["name"]} for u, r in self.resources.items()]}
+            return {"resources": [{"uri": u, "name": r["name"]} for u, r in self.resources.items()],
+                    **LIST_CACHE}
         if method == "resources/read":
             uri = params["uri"]
-            return {"contents": [{"uri": uri, "text": self.resources[uri]["text"]}]}
+            return {"contents": [{"uri": uri, "text": self.resources[uri]["text"]}], **LIST_CACHE}
         if method == "prompts/list":
             return {"prompts": [{"name": n, "description": p["description"]}
-                                for n, p in self.prompts.items()]}
+                                for n, p in self.prompts.items()], **LIST_CACHE}
         if method == "prompts/get":
             name = params["name"]
             return {"messages": [{"role": "user",
                                   "content": {"type": "text", "text": self.prompts[name]["template"]}}]}
-        raise Exception(f"method not found: {method}")
+        raise MCPError(-32601, "Method not found")
 
 
 # Two servers: a support server (tools + a resource + a prompt) and a catalog server.
@@ -264,9 +313,31 @@ def validate_against_schema(args, input_schema):
 
 
 # ===========================================================================
-# Step 4. The MCP host. Connects to servers (handshake + discovery), prints every
-# JSON-RPC frame, and builds the agent's tool palette from what it discovers.
+# Step 4. The MCP host. No handshake: it stamps every request's _meta with the
+# protocol version + its capabilities, optionally asks server/discover first, calls
+# tools/list, prints every JSON-RPC frame, and builds the agent's tool palette from
+# what it discovers.
 # ===========================================================================
+def request_meta(version=PROTOCOL_VERSION):
+    return {MCP + "protocolVersion": version,                          # required
+            MCP + "clientInfo": {"name": "agents-by-hand-host", "version": "0.1.0"},
+            MCP + "clientCapabilities": {}}                            # required; we offer nothing extra
+
+
+def show_frame(req, meta_view):
+    """The request as printed. The _meta is identical on every request, so after the
+    first frame we elide it: "full" prints it, "elide" shows {...}, "version" keeps
+    only the protocol version (for the mismatch demo)."""
+    if meta_view == "full":
+        return json.dumps(req)
+    shown = "{...}"
+    if meta_view == "version":
+        key = MCP + "protocolVersion"
+        shown = "{" + f"{json.dumps(key)}: {json.dumps(req['params']['_meta'][key])}, ...}}"
+    elided = {**req, "params": {**req["params"], "_meta": "@META@"}}
+    return json.dumps(elided).replace('"@META@"', shown)
+
+
 class MCPHost:
     def __init__(self, verbose=True):
         self.servers = {}
@@ -274,27 +345,34 @@ class MCPHost:
         self._id = 0
         self.verbose = verbose
 
-    def _rpc(self, server, method, params):
+    def _rpc(self, server, method, params, version=PROTOCOL_VERSION, meta_view="elide"):
         self._id += 1
-        req = {"jsonrpc": "2.0", "id": self._id, "method": method, "params": params}
+        req = {"jsonrpc": "2.0", "id": self._id, "method": method,
+               "params": {**params, "_meta": request_meta(version)}}
         if self.verbose:
-            print(f"    --> {json.dumps(req)}")
+            print(f"    --> {show_frame(req, meta_view)}")
         resp = server.handle(req)
         if self.verbose:
             print(f"    <-- {json.dumps(resp)}")
-        return resp.get("result", {})
+        return resp.get("result", resp.get("error"))
 
-    def connect(self, server):
-        init = self._rpc(server, "initialize",
-                         {"protocolVersion": PROTOCOL_VERSION,
-                          "clientInfo": {"name": "agents-by-hand-host"}})
-        caps = [c for c, v in init["capabilities"].items() if v is not None]
-        print(f"    [host] connected to {init['serverInfo']['name']} "
-              f"(protocol {init['protocolVersion']}, capabilities: {', '.join(caps)})")
+    def discover(self, server, meta_view="elide"):
+        """Optional for the host (every server must answer it): versions + capabilities."""
+        return self._rpc(server, "server/discover", {}, meta_view=meta_view)
+
+    def list_tools(self, server):
         self.servers[server.name] = server
-        for t in self._rpc(server, "tools/list", {})["tools"]:
+        res = self._rpc(server, "tools/list", {})
+        for t in res["tools"]:
             self.palette[t["name"]] = {"server": server.name, "schema": t["inputSchema"],
                                        "description": t["description"]}
+        return res
+
+    def connect(self, server):
+        d = self.discover(server)
+        print(f"    [host] discovered {d['_meta'][MCP + 'serverInfo']['name']} "
+              f"(protocol {d['supportedVersions'][0]}, capabilities: {', '.join(d['capabilities'])})")
+        self.list_tools(server)
 
     def call_tool(self, name, arguments):
         server = self.servers[self.palette[name]["server"]]
@@ -328,12 +406,16 @@ if __name__ == "__main__":
 
     host = MCPHost()
 
-    # --- 1. The handshake + discovery. -------------------------------------
+    # --- 1. Discovery, no handshake. ---------------------------------------
     print("\n" + "-" * 72)
-    print("1) INITIALIZE handshake + tools/list discovery (the JSON-RPC wire frames).")
+    print("1) DISCOVERY WITHOUT A HANDSHAKE: server/discover (optional) + tools/list.")
     print("-" * 72)
-    host.connect(SUPPORT)
-    print(f"    [host] discovered tools: {list(host.palette)}")
+    d = host.discover(SUPPORT, meta_view="full")     # first frame: _meta in full
+    print(f"    [host] {d['_meta'][MCP + 'serverInfo']['name']} speaks {d['supportedVersions']}, "
+          f"capabilities: {', '.join(d['capabilities'])}")
+    tl = host.list_tools(SUPPORT)                     # from here on _meta is shown as {...}
+    print(f"    [host] discovered tools: {list(host.palette)}  "
+          f"(cache {tl['ttlMs']} ms, {tl['cacheScope']})")
 
     # --- 2. The three primitives. ------------------------------------------
     print("\n" + "-" * 72)
@@ -349,9 +431,16 @@ if __name__ == "__main__":
     pr = host._rpc(SUPPORT, "prompts/get", {"name": "refund_decision"})
     print(f"    [host] prompt template: {pr['messages'][0]['content']['text']!r}")
 
-    # --- 3. The discovered schema drives the Part 1 validator. -------------
+    # --- 3. Version negotiation, stateless style. ---------------------------
     print("\n" + "-" * 72)
-    print("3) THE DISCOVERED SCHEMA DRIVES THE CONTROLLER (Part 1's validator, over the wire).")
+    print("3) VERSION MISMATCH: a host still pinned to the old revision is refused.")
+    print("-" * 72)
+    err = host._rpc(SUPPORT, "tools/list", {}, version="2025-06-18", meta_view="version")
+    print(f"    [host] error {err['code']}: retry with one of {err['data']['supported']}")
+
+    # --- 4. The discovered schema drives the Part 1 validator. -------------
+    print("\n" + "-" * 72)
+    print("4) THE DISCOVERED SCHEMA DRIVES THE CONTROLLER (Part 1's validator, over the wire).")
     print("-" * 72)
     schema = host.palette["process_refund"]["schema"]
     for args in ({"order_id": "ORD-3300", "amount": 180.0},
@@ -361,9 +450,9 @@ if __name__ == "__main__":
         print(f"    validate {json.dumps(args)} -> {'OK' if ok else 'REJECTED: ' + err}")
     print("    The schema was not hardcoded; it arrived from tools/list. Part 1's guarantee, over MCP.")
 
-    # --- 4. Multiplexing two servers into one palette. --------------------
+    # --- 5. Multiplexing two servers into one palette. --------------------
     print("\n" + "-" * 72)
-    print("4) MULTIPLEXING: connect a second server; the palette is the union of both.")
+    print("5) MULTIPLEXING: connect a second server; the palette is the union of both.")
     print("-" * 72)
     quiet = MCPHost(verbose=False)         # connect quietly, then show the merged palette
     quiet.connect(SUPPORT)
@@ -378,23 +467,24 @@ if __name__ == "__main__":
     print(f"      search_products (catalog-server) -> {hop2}")
     print(f"      process_refund  (support-server) available on the same palette")
 
-    # --- 5. The real subprocess-over-stdio path (illustrative). -----------
+    # --- 6. The real subprocess-over-stdio path (illustrative). -----------
     print("\n" + bar)
     print("THE REAL TRANSPORT (illustrative, not executed here): server as a subprocess over")
     print("stdio. Two local processes, no network. Shown for reference; the verified run above")
     print("uses the in-process shim.")
     print(bar)
     print("    $ python mcp_server.py            # process A: reads JSON-RPC from stdin")
-    print('    host -> server (stdin):  {"jsonrpc":"2.0","id":1,"method":"initialize",...}')
-    print('    server -> host (stdout): {"jsonrpc":"2.0","id":1,"result":{"protocolVersion":...}}')
-    print('    host -> server (stdin):  {"jsonrpc":"2.0","id":2,"method":"tools/list"}')
-    print('    server -> host (stdout): {"jsonrpc":"2.0","id":2,"result":{"tools":[...]}}')
+    print('    host -> server (stdin):  {"jsonrpc":"2.0","id":1,"method":"server/discover","params":{"_meta":{...}}}')
+    print('    server -> host (stdout): {"jsonrpc":"2.0","id":1,"result":{"resultType":"complete","supportedVersions":["2026-07-28"],...}}')
+    print('    host -> server (stdin):  {"jsonrpc":"2.0","id":2,"method":"tools/list","params":{"_meta":{...}}}')
+    print('    server -> host (stdout): {"jsonrpc":"2.0","id":2,"result":{"resultType":"complete","tools":[...],...}}')
     print("    (same frames as above, now crossing a pipe between two OS processes)")
 
     print("\n" + bar)
     print("Done. Tools are no longer a hardcoded dict:")
     print("  - a SERVER advertises tools/resources/prompts; a HOST discovers them over JSON-RPC")
-    print("  - the initialize handshake negotiates the protocol version + capabilities")
+    print("  - no handshake: every request carries its protocol version + capabilities in _meta")
+    print("  - server/discover (optional) advertises versions + capabilities; a mismatch is -32022")
     print("  - discovered inputSchemas feed Part 1's validator/controller, unchanged")
     print("  - one host MULTIPLEXES many servers into a single, run-time-assembled palette")
     print(bar)
